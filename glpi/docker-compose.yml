@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  mariadb:
+    image: mariadb:10.7
+    container_name: mariadb
+    hostname: mariadb-host
+    networks:
+      mariadb_network:
+        ipv4_address: 172.20.0.2
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql:delegated
+    env_file:
+      - ./.env
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_HOST=${MYSQL_ROOT_HOST}
+      - TZ=${TIMEZONE}
+    restart: always
+
+  glpi:
+    image: glpi-docker-10.0.15
+    container_name: glpi
+    hostname: glpi-host
+    networks:
+      mariadb_network:
+        ipv4_address: 172.20.0.3
+    ports:
+      - "80:80"
+    volumes:
+      - glpi_data:/var/www/html:delegated
+    env_file:
+      - ./.env	  
+    environment:
+      - TIMEZONE=${TIMEZONE}
+      - VERSION=${VERSION}
+      - UPLOAD_MAX_FILESIZE=${UPLOAD_MAX_FILESIZE}
+      - POST_MAX_FILESIZE=${POST_MAX_FILESIZE}
+    restart: always
+
+volumes:
+  mariadb_data:
+  glpi_data:
+
+networks:
+  mariadb_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
